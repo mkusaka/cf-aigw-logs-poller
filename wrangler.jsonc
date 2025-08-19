@@ -1,0 +1,54 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "cf-aigw-logs-poller",
+	"main": "src/index.ts",
+	"compatibility_date": "2025-08-13",
+	"workers_dev": true,
+
+	// 毎分起動
+	"triggers": {
+		"crons": ["* * * * *"]
+	},
+
+	// Durable Object: 単一実行ロック + チェックポイント(last_id)
+	"durable_objects": {
+		"bindings": [
+			{ "name": "INGESTOR", "class_name": "Ingestor" }
+		]
+	},
+
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_classes": ["Ingestor"]
+		}
+	],
+
+	"vars": {
+		// Cloudflare API
+		"CF_API_BASE": "https://api.cloudflare.com/client/v4",
+
+		// GCS
+		"GCS_BUCKET": "your-bucket-name",
+		"GCS_PREFIX": "rows",
+
+		// Performance and operation parameters
+		"PER_PAGE": "50",
+		"PARALLEL_UPLOAD": "24",
+		"BACKFILL_MINUTES": "10",
+		"MAX_WALL_MS": "20000",
+		"SAFETY_MS": "1500",
+		"MAX_PAGES_PER_RUN": "80",
+
+		// Google OAuth (Service Account)
+		"GCP_OAUTH_AUD": "https://oauth2.googleapis.com/token",
+		"GCP_OAUTH_SCOPE": "https://www.googleapis.com/auth/devstorage.read_write"
+	}
+
+	// ===== Secrets (wrangler secret put) =====
+	// CF_API_TOKEN        : Cloudflare API Token (AI Gateway Logs read permission)
+	// CF_ACCOUNT_ID       : Cloudflare Account ID
+	// CF_GATEWAY_ID       : AI Gateway Name
+	// GCP_SA_EMAIL        : Service Account Email
+	// GCP_SA_PRIVATE_KEY  : -----BEGIN PRIVATE KEY----- ... -----END PRIVATE KEY-----
+}
